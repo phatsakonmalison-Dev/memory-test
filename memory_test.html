@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แบบทดสอบความจำ - Memory Test</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+  }
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+  }
+  .header h1 { font-size: 2em; margin-bottom: 10px; }
+  .header p { opacity: 0.9; font-size: 1.1em; }
+  .content { padding: 30px; }
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.5s; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .story-box {
+    background: #f8f9ff;
+    border-left: 5px solid #667eea;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    line-height: 1.9;
+    font-size: 1.05em;
+  }
+  .story-box h2 { color: #667eea; margin-bottom: 15px; }
+  .timer {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #856404;
+  }
+  .btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.1em;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: inherit;
+    font-weight: bold;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-center { display: block; margin: 20px auto; }
+  .progress-bar {
+    background: #e0e0e0;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .progress-fill {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: 100%;
+    transition: width 0.3s;
+  }
+  .question-number {
+    color: #667eea;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 1em;
+  }
+  .question-text {
+    font-size: 1.3em;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  .options { display: flex; flex-direction: column; gap: 12px; }
+  .option {
+    background: #f8f9ff;
+    border: 2px solid #e0e0ff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1.05em;
+    text-align: left;
+    font-family: inherit;
+  }
+  .option:hover { background: #eef0ff; border-color: #667eea; transform: translateX(5px); }
+  .option.selected { background: #667eea; color: white; border-color: #667eea; }
+  .option.correct { background: #28a745; color: white; border-color: #28a745; }
+  .option.wrong { background: #dc3545; color: white; border-color: #dc3545; }
+  .nav-buttons { display: flex; justify-content: space-between; margin-top: 25px; gap: 10px; }
+  .result-circle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto;
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+  }
+  .result-circle .score { font-size: 3.5em; font-weight: bold; }
+  .result-circle .total { font-size: 1.2em; opacity: 0.9; }
+  .result-message {
+    text-align: center;
+    font-size: 1.3em;
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  .result-message.excellent { background: #d4edda; color: #155724; }
+  .result-message.good { background: #d1ecf1; color: #0c5460; }
+  .result-message.fair { background: #fff3cd; color: #856404; }
+  .result-message.poor { background: #f8d7da; color: #721c24; }
+  .review-item {
+    background: #f8f9ff;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-left: 5px solid #ccc;
+  }
+  .review-item.correct { border-left-color: #28a745; }
+  .review-item.wrong { border-left-color: #dc3545; }
+  .review-item .q { font-weight: bold; margin-bottom: 8px; }
+  .review-item .a { color: #666; font-size: 0.95em; }
+  .review-item .a.correct-ans { color: #28a745; font-weight: bold; }
+  .review-item .a.wrong-ans { color: #dc3545; }
+  .instructions {
+    background: #e7f3ff;
+    border-left: 5px solid #2196F3;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    line-height: 1.7;
+  }
+  .instructions h3 { color: #2196F3; margin-bottom: 10px; }
+  .instructions ul { margin-left: 20px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🧠 แบบทดสอบความจำ</h1>
+    <p>ทดสอบความสามารถในการจดจำรายละเอียด</p>
+  </div>
+
+  <div class="content">
+    <!-- Welcome Screen -->
+    <div class="screen active" id="welcome">
+      <div class="instructions">
+        <h3>📋 วิธีการทำแบบทดสอบ</h3>
+        <ul>
+          <li>คุณจะได้อ่านเรื่องราว 1 เรื่อง ภายในเวลา <b>90 วินาที</b></li>
+          <li>พยายามจดจำรายละเอียดต่างๆ ให้มากที่สุด</li>
+          <li>หลังจากนั้นจะมีคำถาม <b>20 ข้อ</b> เกี่ยวกับเรื่องที่อ่าน</li>
+          <li>แต่ละข้อมี 4 ตัวเลือก ให้เลือกคำตอบที่ถูกต้องที่สุด</li>
+          <li>ห้ามย้อนกลับไปดูเรื่องอีกครั้ง</li>
+        </ul>
+      </div>
+      <button class="btn btn-center" onclick="startReading()">เริ่มทำแบบทดสอบ ▶</button>
+    </div>
+
+    <!-- Reading Screen -->
+    <div class="screen" id="reading">
+      <div class="timer" id="readingTimer">⏱ เวลาที่เหลือ: 90 วินาที</div>
+      <div class="story-box">
+        <h2>📖 เรื่อง: วันเกิดของน้องมิน</h2>
+        <p>
+          เช้าวันเสาร์ที่ <b>15 มีนาคม 2567</b> เป็นวันเกิดครบ <b>8 ขวบ</b> ของ <b>น้องมิน</b>
+          เด็กหญิงผมยาวสีดำที่อาศัยอยู่บ้านเลขที่ <b>27</b> ซอยสุขใจ คุณแม่ชื่อ <b>คุณนภา</b>
+          เป็นพยาบาลที่โรงพยาบาลศิริราช ส่วนคุณพ่อชื่อ <b>คุณสมชาย</b> เป็นวิศวกรโยธา
+        </p>
+        <p style="margin-top: 12px;">
+          วันนี้คุณแม่ตื่นแต่เช้าตี <b>5</b> เพื่อทำเค้กช็อกโกแลตและแต่งหน้าด้วยสตรอเบอร์รี่ <b>12 ลูก</b>
+          น้องมินได้รับของขวัญทั้งหมด <b>4 ชิ้น</b> ได้แก่ ตุ๊กตาหมีสีน้ำตาล กล่องสีไม้ <b>48 สี</b>
+          จักรยานสีชมพู และหนังสือนิทาน <b>3 เล่ม</b>
+        </p>
+        <p style="margin-top: 12px;">
+          ตอนบ่ายโมงตรง เพื่อนของน้องมินมาที่งาน <b>6 คน</b> ได้แก่ ปาล์ม น้ำตาล โอ๊ต ฟ้า มะลิ และต้นกล้า
+          พวกเขาเล่นเกมเก้าอี้ดนตรีและกินพิซซ่าหน้าฮาวายเอี้ยน <b>2 ถาด</b>
+          คุณตาให้เงินขวัญถุง <b>1,500 บาท</b> น้องมินเป่าเทียน <b>8 เล่ม</b> และอธิษฐานขอให้สอบได้ที่ 1
+        </p>
+        <p style="margin-top: 12px;">
+          งานเลิกตอน <b>5 โมงเย็น</b> น้องมินมีความสุขมาก และตั้งใจจะอ่านหนังสือนิทานเล่มแรกชื่อ
+          "<b>เจ้าหญิงดวงดาว</b>" ก่อนนอน คืนนั้นฝนตกหนักและน้องมินหลับฝันดี
+        </p>
+      </div>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div class="screen" id="quiz">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="question-number" id="questionNumber"></div>
+      <div class="question-text" id="questionText"></div>
+      <div class="options" id="optionsContainer"></div>
+      <div class="nav-buttons">
+        <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>ถัดไป ▶</button>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div class="screen" id="result">
+      <h2 style="text-align: center; color: #667eea; margin-bottom: 10px;">🎉 ผลการทดสอบ</h2>
+      <div class="result-circle">
+        <div class="score" id="finalScore">0</div>
+        <div class="total">จาก 20 คะแนน</div>
+      </div>
+      <div class="result-message" id="resultMessage"></div>
+      <h3 style="margin: 20px 0 15px; color: #667eea;">📝 ทบทวนคำตอบ</h3>
+      <div id="reviewContainer"></div>
+      <button class="btn btn-center" onclick="restart()">ทำแบบทดสอบใหม่ 🔄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "วันเกิดของน้องมินตรงกับวันที่เท่าไหร่?",
+    options: ["14 มีนาคม 2567", "15 มีนาคม 2567", "16 มีนาคม 2567", "15 เมษายน 2567"],
+    answer: 1
+  },
+  {
+    q: "น้องมินอายุครบกี่ขวบในวันเกิดนี้?",
+    options: ["7 ขวบ", "8 ขวบ", "9 ขวบ", "10 ขวบ"],
+    answer: 1
+  },
+  {
+    q: "บ้านของน้องมินอยู่บ้านเลขที่เท่าไหร่?",
+    options: ["17", "25", "27", "72"],
+    answer: 2
+  },
+  {
+    q: "คุณแม่ของน้องมินชื่ออะไร?",
+    options: ["คุณนภา", "คุณนภัส", "คุณนิภา", "คุณนิดา"],
+    answer: 0
+  },
+  {
+    q: "คุณแม่ทำงานเป็นอะไร?",
+    options: ["หมอ", "พยาบาล", "ครู", "นักวิจัย"],
+    answer: 1
+  },
+  {
+    q: "คุณพ่อของน้องมินมีอาชีพอะไร?",
+    options: ["วิศวกรไฟฟ้า", "วิศวกรเครื่องกล", "วิศวกรโยธา", "สถาปนิก"],
+    answer: 2
+  },
+  {
+    q: "คุณแม่ตื่นนอนตอนกี่โมงเพื่อทำเค้ก?",
+    options: ["ตี 4", "ตี 5", "ตี 6", "7 โมงเช้า"],
+    answer: 1
+  },
+  {
+    q: "เค้กวันเกิดเป็นรสอะไร?",
+    options: ["วานิลลา", "สตรอเบอร์รี่", "ช็อกโกแลต", "ชาเขียว"],
+    answer: 2
+  },
+  {
+    q: "บนหน้าเค้กมีสตรอเบอร์รี่กี่ลูก?",
+    options: ["8 ลูก", "10 ลูก", "12 ลูก", "15 ลูก"],
+    answer: 2
+  },
+  {
+    q: "น้องมินได้รับของขวัญทั้งหมดกี่ชิ้น?",
+    options: ["3 ชิ้น", "4 ชิ้น", "5 ชิ้น", "6 ชิ้น"],
+    answer: 1
+  },
+  {
+    q: "ตุ๊กตาหมีที่ได้รับเป็นสีอะไร?",
+    options: ["สีขาว", "สีดำ", "สีน้ำตาล", "สีชมพู"],
+    answer: 2
+  },
+  {
+    q: "กล่องสีไม้ที่ได้รับมีกี่สี?",
+    options: ["24 สี", "36 สี", "48 สี", "60 สี"],
+    answer: 2
+  },
+  {
+    q: "จักรยานที่น้องมินได้รับเป็นสีอะไร?",
+    options: ["สีแดง", "สีฟ้า", "สีชมพู", "สีม่วง"],
+    answer: 2
+  },
+  {
+    q: "น้องมินได้รับหนังสือนิทานกี่เล่ม?",
+    options: ["2 เล่ม", "3 เล่ม", "4 เล่ม", "5 เล่ม"],
+    answer: 1
+  },
+  {
+    q: "เพื่อนของน้องมินมาที่งานทั้งหมดกี่คน?",
+    options: ["4 คน", "5 คน", "6 คน", "7 คน"],
+    answer: 2
+  },
+  {
+    q: "เพื่อนคนใดที่ไม่ได้ไปงานวันเกิด?",
+    options: ["ปาล์ม", "โอ๊ต", "ใบเตย", "มะลิ"],
+    answer: 2
+  },
+  {
+    q: "พวกเขากินพิซซ่าหน้าอะไร?",
+    options: ["ซีฟู้ด", "ฮาวายเอี้ยน", "เปปเปอโรนี", "ชีส"],
+    answer: 1
+  },
+  {
+    q: "คุณตาให้เงินขวัญถุงเท่าไหร่?",
+    options: ["1,000 บาท", "1,200 บาท", "1,500 บาท", "2,000 บาท"],
+    answer: 2
+  },
+  {
+    q: "น้องมินอธิษฐานขออะไร?",
+    options: ["อยากได้ของเล่นเพิ่ม", "ขอให้สอบได้ที่ 1", "ขอให้ครอบครัวมีความสุข", "อยากไปต่างประเทศ"],
+    answer: 1
+  },
+  {
+    q: "หนังสือนิทานเล่มแรกที่น้องมินจะอ่านชื่อว่าอะไร?",
+    options: ["เจ้าหญิงดวงดาว", "เจ้าหญิงดวงจันทร์", "เจ้าหญิงดวงตะวัน", "เจ้าหญิงนิทรา"],
+    answer: 0
+  }
+];
+
+let currentQuestion = 0;
+let userAnswers = [];
+let score = 0;
+let readingInterval;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startReading() {
+  showScreen('reading');
+  let timeLeft = 90;
+  const timerEl = document.getElementById('readingTimer');
+  readingInterval = setInterval(() => {
+    timeLeft--;
+    timerEl.textContent = `⏱ เวลาที่เหลือ: ${timeLeft} วินาที`;
+    if (timeLeft <= 10) {
+      timerEl.style.background = '#f8d7da';
+      timerEl.style.borderColor = '#dc3545';
+      timerEl.style.color = '#721c24';
+    }
+    if (timeLeft <= 0) {
+      clearInterval(readingInterval);
+      startQuiz();
+    }
+  }, 1000);
+}
+
+function startQuiz() {
+  currentQuestion = 0;
+  userAnswers = [];
+  score = 0;
+  showScreen('quiz');
+  loadQuestion();
+}
+
+function loadQuestion() {
+  const q = questions[currentQuestion];
+  document.getElementById('questionNumber').textContent = `ข้อ ${currentQuestion + 1} จาก ${questions.length}`;
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('progressFill').style.width = `${((currentQuestion) / questions.length) * 100}%`;
+
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    btn.onclick = () => selectOption(i, btn);
+    container.appendChild(btn);
+  });
+
+  document.getElementById('nextBtn').disabled = true;
+  document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'ดูผลคะแนน 🏆' : 'ถัดไป ▶';
+}
+
+function selectOption(index, btn) {
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  btn.classList.add('selected');
+  userAnswers[currentQuestion] = index;
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion() {
+  if (userAnswers[currentQuestion] === questions[currentQuestion].answer) {
+    score++;
+  }
+  currentQuestion++;
+  if (currentQuestion >= questions.length) {
+    showResult();
+  } else {
+    loadQuestion();
+  }
+}
+
+function showResult() {
+  showScreen('result');
+  document.getElementById('finalScore').textContent = score;
+  const percent = (score / questions.length) * 100;
+  const msgEl = document.getElementById('resultMessage');
+
+  if (percent >= 90) {
+    msgEl.textContent = '🏆 ยอดเยี่ยมมาก! ความจำของคุณเฉียบคมสุดๆ';
+    msgEl.className = 'result-message excellent';
+  } else if (percent >= 70) {
+    msgEl.textContent = '👍 ดีมาก! ความจำของคุณอยู่ในระดับดี';
+    msgEl.className = 'result-message good';
+  } else if (percent >= 50) {
+    msgEl.textContent = '💪 พอใช้ได้ ลองฝึกฝนความจำเพิ่มอีกนะ';
+    msgEl.className = 'result-message fair';
+  } else {
+    msgEl.textContent = '📚 ควรฝึกฝนเพิ่มเติม ลองอ่านอย่างตั้งใจมากขึ้น';
+    msgEl.className = 'result-message poor';
+  }
+
+  const reviewContainer = document.getElementById('reviewContainer');
+  reviewContainer.innerHTML = '';
+  questions.forEach((q, i) => {
+    const isCorrect = userAnswers[i] === q.answer;
+    const userAns = userAnswers[i] !== undefined ? q.options[userAnswers[i]] : 'ไม่ได้ตอบ';
+    const correctAns = q.options[q.answer];
+    const div = document.createElement('div');
+    div.className = `review-item ${isCorrect ? 'correct' : 'wrong'}`;
+    div.innerHTML = `
+      <div class="q">${isCorrect ? '✅' : '❌'} ข้อ ${i + 1}: ${q.q}</div>
+      <div class="a ${isCorrect ? 'correct-ans' : 'wrong-ans'}">คุณตอบ: ${userAns}</div>
+      ${!isCorrect ? `<div class="a correct-ans">คำตอบที่ถูก: ${correctAns}</div>` : ''}
+    `;
+    reviewContainer.appendChild(div);
+  });
+}
+
+function restart() {
+  currentQuestion = 0;
+  userAnswers = [];
+  score = 0;
+  showScreen('welcome');
+}
+</script>
+</body>
+</html>
